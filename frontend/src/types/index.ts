@@ -29,6 +29,7 @@ export interface PredictionRequest {
 export interface PredictionResponse {
   prediction: 'Churn' | 'Not Churn'
   probability: number
+  model: string
 }
 
 export type RiskLevel = 'Low' | 'Medium' | 'High'

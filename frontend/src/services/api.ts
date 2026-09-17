@@ -45,10 +45,14 @@ async function withFallback<T>(
 }
 
 export async function getHealth() {
-  // TODO(backend): confirm GET /health response shape once implemented.
+  // Backend contract: GET /health -> { status: "ok" | "degraded" | "down" }.
+  // Only "ok" counts as live; anything else falls back to demo data.
   return withFallback(
     async () => {
       const res = await apiClient.get<HealthStatus>('/health')
+      if (res.data.status !== 'ok') {
+        throw new Error('Backend reported non-ok health status')
+      }
       return res.data
     },
     MOCK_HEALTH,
@@ -68,8 +72,8 @@ export async function postPrediction(payload: PredictionRequest) {
 }
 
 export async function getMetrics() {
-  // TODO(backend): GET /metrics — currently falls back to the last recorded
-  // evaluation report (backend/reports/model_metrics.json) if unreachable.
+  // Falls back to the last recorded evaluation report
+  // (backend/reports/evaluation_report.json) if the backend is unreachable.
   return withFallback(
     async () => {
       const res = await apiClient.get<ModelMetrics>('/metrics')
@@ -80,7 +84,6 @@ export async function getMetrics() {
 }
 
 export async function getModelInfo() {
-  // TODO(backend): GET /model-info is not yet implemented server-side.
   return withFallback(
     async () => {
       const res = await apiClient.get<ModelInfo>('/model-info')
@@ -126,5 +129,6 @@ function mockPredictionFor(payload: PredictionRequest): PredictionResponse {
   return {
     prediction: probability >= 0.5 ? 'Churn' : 'Not Churn',
     probability: Number(probability.toFixed(4)),
+    model: 'demo-heuristic',
   }
 }

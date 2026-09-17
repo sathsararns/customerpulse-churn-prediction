@@ -121,6 +121,10 @@ function ResultContent({ result }: { result: PredictionResponse }) {
           </div>
         </div>
       </div>
+
+      <p className="text-center text-[11px] text-muted-foreground">
+        Scored by <span className="font-medium text-foreground">{result.model}</span>
+      </p>
     </motion.div>
   )
 }
