@@ -1,17 +1,36 @@
-version: "3.9"
+
 
 services:
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:latest
+    container_name: customerpulse-mlflow
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./mlflow-data:/mlflow
+    command: >
+      mlflow server
+      --host 0.0.0.0
+      --port 5000
+      --backend-store-uri sqlite:////mlflow/mlflow.db
+      --default-artifact-root /mlflow/artifacts
+    restart: unless-stopped
+
   backend:
     build:
       context: ./backend
     container_name: customerpulse-backend
     ports:
       - "8000:8000"
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
     volumes:
       - ./backend/data:/app/data
       - ./backend/models:/app/models
       - ./backend/reports:/app/reports
       - ./backend/artifacts:/app/artifacts
+    depends_on:
+      - mlflow
     restart: unless-stopped
 
   frontend:
