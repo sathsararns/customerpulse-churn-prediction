@@ -1,9 +1,7 @@
 from pathlib import Path
-from datetime import datetime, timezone
 import sys
 import json
 
-import pandas as pd
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -12,8 +10,10 @@ sys.path.append(str(BASE_DIR))
 
 from app.schemas import CustomerInput
 from src.model_inference import load_artifacts, predict_single
+from src.prediction_store import save_prediction, get_recent_predictions
+from src.db import init_db
 
-app = FastAPI(title="CustomerPulse AI", version="1.0.0")
+app = FastAPI(title="CustomerPulse AI", version="1.1.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -22,6 +22,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.on_event("startup")
+def startup_event():
+    init_db()
 
 
 @app.get("/")
@@ -37,38 +42,11 @@ def health():
 @app.get("/model-info")
 def model_info():
     metrics_path = BASE_DIR / "reports" / "model_metrics.json"
-    train_x_path = BASE_DIR / "data" / "processed" / "split_data" / "X_train.csv"
-    test_x_path = BASE_DIR / "data" / "processed" / "split_data" / "X_test.csv"
-    scaler_path = BASE_DIR / "artifacts" / "scaler.pkl"
-
     if not metrics_path.exists():
         raise HTTPException(status_code=404, detail="Model metrics not found")
 
     with open(metrics_path, "r", encoding="utf-8") as f:
-        report_info = json.load(f)
-
-    best_model_name = report_info.get("best_model", "unknown")
-    model_path = BASE_DIR / "models" / f"{best_model_name}.pkl"
-
-    train_rows = len(pd.read_csv(train_x_path)) if train_x_path.exists() else 0
-    test_rows = len(pd.read_csv(test_x_path)) if test_x_path.exists() else 0
-    feature_count = (
-        len(pd.read_csv(train_x_path, nrows=1).columns) if train_x_path.exists() else 0
-    )
-    last_updated = datetime.fromtimestamp(
-        metrics_path.stat().st_mtime, tz=timezone.utc
-    ).isoformat()
-
-    return {
-        "name": f"{best_model_name.replace('_', ' ').title()} — Churn Classifier",
-        "version": app.version,
-        "algorithm": best_model_name,
-        "trainingStatus": "trained" if model_path.exists() else "idle",
-        "pipelineHealth": "healthy" if model_path.exists() and scaler_path.exists() else "degraded",
-        "lastUpdated": last_updated,
-        "datasetSize": train_rows + test_rows,
-        "features": feature_count,
-    }
+        return json.load(f)
 
 
 @app.get("/metrics")
@@ -78,12 +56,13 @@ def metrics():
         raise HTTPException(status_code=404, detail="Evaluation report not found")
 
     with open(evaluation_path, "r", encoding="utf-8") as f:
-        data = json.load(f)
+        return json.load(f)
 
-    data["updated_at"] = datetime.fromtimestamp(
-        evaluation_path.stat().st_mtime, tz=timezone.utc
-    ).isoformat()
-    return data
+
+@app.get("/recent-predictions")
+def recent_predictions(limit: int = 10):
+    items = get_recent_predictions(limit=limit)
+    return {"items": items}
 
 
 @app.post("/predict")
@@ -91,9 +70,60 @@ def predict(customer: CustomerInput):
     try:
         model, scaler, train_columns, model_name = load_artifacts(BASE_DIR)
         result = predict_single(model, scaler, train_columns, customer.model_dump())
+
+        probability = float(result["probability"])
+
+        if probability >= 0.7:
+            risk_level = "High"
+        elif probability >= 0.4:
+            risk_level = "Medium"
+        else:
+            risk_level = "Low"
+
+        save_prediction(
+            model_name=model_name,
+            prediction=result["prediction"],
+            probability=probability,
+            risk_level=risk_level,
+            customer_payload=customer.model_dump(),
+        )
+
         return {
             "model": model_name,
-            **result
+            "prediction": result["prediction"],
+            "probability": probability,
+            "risk_level": risk_level,
         }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    try:
+        model, scaler, train_columns, model_name = load_artifacts(BASE_DIR)
+        result = predict_single(model, scaler, train_columns, customer.model_dump())
+
+        probability = float(result["probability"])
+
+        if probability >= 0.7:
+            risk_level = "High"
+        elif probability >= 0.4:
+            risk_level = "Medium"
+        else:
+            risk_level = "Low"
+
+        save_prediction(
+            model_name=model_name,
+            prediction=result["prediction"],
+            probability=probability,
+            risk_level=risk_level,
+            customer_payload=customer.model_dump(),
+        )
+
+        return {
+            "model": model_name,
+            "prediction": result["prediction"],
+            "probability": probability,
+            "risk_level": risk_level,
+        }
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
