@@ -70,7 +70,11 @@ def train_and_select_best_model(X_train, y_train, X_test, y_test):
             print(f"ROC AUC  : {metrics['roc_auc']:.4f}")
 
             mlflow.log_metrics(metrics)
-            mlflow.sklearn.log_model(model, artifact_path="model")
+            mlflow.sklearn.log_model(
+                model,
+                name="model",
+                serialization_format=mlflow.sklearn.SERIALIZATION_FORMAT_CLOUDPICKLE,
+            )
 
             if metrics["f1_score"] > best_f1:
                 best_f1 = metrics["f1_score"]
