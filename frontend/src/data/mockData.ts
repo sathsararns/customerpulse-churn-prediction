@@ -63,3 +63,10 @@ export const MOCK_HEALTH = {
   uptimeSeconds: 60 * 60 * 26,
   version: '1.4.2',
 }
+
+export const MOCK_MLFLOW_INFO = {
+  status: 'unreachable',
+  experiment_name: 'CustomerPulse-AI',
+  tracking_uri: 'http://127.0.0.1:5000',
+  ui_url: 'http://127.0.0.1:5000',
+}

@@ -2,6 +2,7 @@ import axios from 'axios'
 import {
   MOCK_HEALTH,
   MOCK_METRICS,
+  MOCK_MLFLOW_INFO,
   MOCK_MODEL_INFO,
   MOCK_RECENT_PREDICTIONS,
 } from '@/data/mockData'
@@ -96,6 +97,23 @@ export async function getModelInfo() {
       return res.data
     },
     MOCK_MODEL_INFO,
+  )
+}
+
+export type MlflowInfo = {
+  status: string
+  experiment_name: string
+  tracking_uri: string
+  ui_url: string
+}
+
+export async function getMlflowInfo() {
+  return withFallback(
+    async () => {
+      const res = await apiClient.get<MlflowInfo>('/mlflow-info')
+      return res.data
+    },
+    MOCK_MLFLOW_INFO,
   )
 }
 

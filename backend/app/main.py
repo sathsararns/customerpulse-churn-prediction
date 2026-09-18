@@ -41,6 +41,16 @@ def health():
     return {"status": "ok"}
 
 
+@app.get("/mlflow-info")
+def mlflow_info():
+    return {
+        "status": "connected",
+        "experiment_name": "CustomerPulse-AI",
+        "tracking_uri": "http://127.0.0.1:5000",
+        "ui_url": "http://127.0.0.1:5000",
+    }
+
+
 @app.get("/model-info")
 def model_info():
     metrics_path = BASE_DIR / "reports" / "model_metrics.json"
