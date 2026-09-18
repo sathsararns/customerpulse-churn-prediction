@@ -3,7 +3,7 @@ import { toast } from 'sonner'
 import { AppShell } from '@/components/layout/app-shell'
 import { PredictionForm } from '@/components/forms/prediction-form'
 import { PredictionResultPanel } from '@/components/dashboard/prediction-result-panel'
-import { postPrediction } from '@/services/api'
+import { postPrediction, notifyRecentPredictionsChanged } from '@/services/api'
 import { getRiskLevel } from '@/lib/risk'
 import type { PredictionRequest, PredictionResponse } from '@/types'
 
@@ -19,6 +19,11 @@ export function PredictPage() {
       const { data, isLive: live } = await postPrediction(payload)
       setResult(data)
       setIsLive(live)
+
+      if (live) {
+        notifyRecentPredictionsChanged()
+      }
+
       const risk = getRiskLevel(data.probability)
       if (!live) {
         toast.warning('Prediction generated from demo data', {

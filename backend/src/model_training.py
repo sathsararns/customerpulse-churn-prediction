@@ -3,14 +3,19 @@ import sys
 import json
 import joblib
 import pandas as pd
+import mlflow
+import mlflow.sklearn
 
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
 
-# Make backend root available for imports like `src.*`
 BASE_DIR = Path(__file__).resolve().parents[1]
 sys.path.append(str(BASE_DIR))
 
 from src.model_building import build_models
+
+
+MLFLOW_TRACKING_URI = "http://127.0.0.1:5000"
+MLFLOW_EXPERIMENT_NAME = "CustomerPulse-AI"
 
 
 def load_split_data(base_dir: Path):
@@ -40,6 +45,9 @@ def evaluate_model(model, X_test, y_test):
 def train_and_select_best_model(X_train, y_train, X_test, y_test):
     models = build_models()
 
+    mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+    mlflow.set_experiment(MLFLOW_EXPERIMENT_NAME)
+
     best_model_name = None
     best_model = None
     best_metrics = None
@@ -47,21 +55,28 @@ def train_and_select_best_model(X_train, y_train, X_test, y_test):
 
     for name, model in models.items():
         print(f"\nTraining model: {name}")
-        model.fit(X_train, y_train)
 
-        metrics = evaluate_model(model, X_test, y_test)
+        with mlflow.start_run(run_name=name):
+            mlflow.log_param("model_name", name)
+            mlflow.log_params(model.get_params())
 
-        print(f"Accuracy : {metrics['accuracy']:.4f}")
-        print(f"Precision: {metrics['precision']:.4f}")
-        print(f"Recall   : {metrics['recall']:.4f}")
-        print(f"F1 Score : {metrics['f1_score']:.4f}")
-        print(f"ROC AUC  : {metrics['roc_auc']:.4f}")
+            model.fit(X_train, y_train)
+            metrics = evaluate_model(model, X_test, y_test)
 
-        if metrics["f1_score"] > best_f1:
-            best_f1 = metrics["f1_score"]
-            best_model_name = name
-            best_model = model
-            best_metrics = metrics
+            print(f"Accuracy : {metrics['accuracy']:.4f}")
+            print(f"Precision: {metrics['precision']:.4f}")
+            print(f"Recall   : {metrics['recall']:.4f}")
+            print(f"F1 Score : {metrics['f1_score']:.4f}")
+            print(f"ROC AUC  : {metrics['roc_auc']:.4f}")
+
+            mlflow.log_metrics(metrics)
+            mlflow.sklearn.log_model(model, artifact_path="model")
+
+            if metrics["f1_score"] > best_f1:
+                best_f1 = metrics["f1_score"]
+                best_model_name = name
+                best_model = model
+                best_metrics = metrics
 
     return best_model_name, best_model, best_metrics
 

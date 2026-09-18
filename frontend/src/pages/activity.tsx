@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { RefreshCw, Search } from 'lucide-react'
 import { AppShell } from '@/components/layout/app-shell'
 import { Button } from '@/components/ui/button'
@@ -6,12 +6,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { RecentPredictionsTable } from '@/components/dashboard/recent-predictions-table'
 import { useApiResource } from '@/hooks/use-api-resource'
-import { getRecentPredictions } from '@/services/api'
+import { getRecentPredictions, RECENT_PREDICTIONS_REFRESH_EVENT } from '@/services/api'
 
 export function ActivityPage() {
   const fetcher = useCallback(() => getRecentPredictions(), [])
   const { data: predictions, isLive, loading, refetch } = useApiResource(fetcher)
   const [query, setQuery] = useState('')
+
+  useEffect(() => {
+    const handleRefresh = () => {
+      refetch()
+    }
+
+    window.addEventListener(RECENT_PREDICTIONS_REFRESH_EVENT, handleRefresh)
+    return () => {
+      window.removeEventListener(RECENT_PREDICTIONS_REFRESH_EVENT, handleRefresh)
+    }
+  }, [refetch])
 
   const filtered = useMemo(() => {
     if (!predictions) return []

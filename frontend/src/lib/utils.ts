@@ -20,18 +20,18 @@ export function formatCurrency(value: number) {
 export function formatRelativeTime(iso?: string | null) {
   if (!iso) return 'just now'
 
-  const date = new Date(iso)
-  const time = date.getTime()
-
-  if (Number.isNaN(time)) return 'just now'
+  const time = new Date(iso).getTime()
+  if (!Number.isFinite(time)) return 'just now'
 
   const diffMs = time - Date.now()
   const diffMin = Math.round(diffMs / 60000)
   const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' })
 
   if (Math.abs(diffMin) < 60) return rtf.format(diffMin, 'minute')
+
   const diffHr = Math.round(diffMin / 60)
   if (Math.abs(diffHr) < 24) return rtf.format(diffHr, 'hour')
+
   const diffDay = Math.round(diffHr / 24)
   return rtf.format(diffDay, 'day')
 }

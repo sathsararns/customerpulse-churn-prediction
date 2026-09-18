@@ -149,7 +149,7 @@ export function MetricsPage() {
                     decision threshold for high-value accounts.
                   </p>
                   <p className="text-xs text-muted-foreground/80">
-                    Last evaluated {metrics?.updated_at ? formatRelativeTime(metrics.updated_at) : 'recently'}.
+                      Last evaluated {metrics?.updated_at ? formatRelativeTime(metrics.updated_at) : 'recently'}.
                   </p>
                 </>
               )}

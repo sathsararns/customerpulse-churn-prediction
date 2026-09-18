@@ -18,6 +18,14 @@ import type {
 
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'
 
+export const RECENT_PREDICTIONS_REFRESH_EVENT = 'customerpulse:recent-predictions-refresh'
+
+export function notifyRecentPredictionsChanged() {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event(RECENT_PREDICTIONS_REFRESH_EVENT))
+  }
+}
+
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   timeout: 8000,
