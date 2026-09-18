@@ -49,6 +49,13 @@
     --chart-4: 152 69% 31%;
     --chart-5: 38 92% 50%;
 
+    /* Validated categorical series (see dataviz skill palette) — used by data-viz charts */
+    --series-1: #2a78d6;
+    --series-2: #eb6834;
+    --series-3: #1baf7a;
+    --series-4: #eda100;
+    --series-5: #e87ba4;
+
     --radius: 0.75rem;
   }
 
@@ -98,6 +105,13 @@
     --chart-3: 262 83% 70%;
     --chart-4: 152 60% 45%;
     --chart-5: 38 92% 55%;
+
+    /* Validated categorical series (see dataviz skill palette) — used by data-viz charts */
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --series-4: #c98500;
+    --series-5: #d55181;
   }
 }
 

@@ -69,7 +69,7 @@ export function KpiCard({
                 ACCENT_MAP[accent],
               )}
             >
-              <Icon className="h-4.5 w-4.5" />
+              <Icon className="h-4 w-4" />
             </span>
           </div>
           <p className="text-3xl font-bold tracking-tight tabular-nums">{value}</p>

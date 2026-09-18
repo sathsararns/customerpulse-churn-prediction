@@ -4,6 +4,7 @@ import { Toaster } from 'sonner'
 import { Loader2 } from 'lucide-react'
 import { ThemeProvider } from '@/context/theme-provider'
 import { TooltipProvider } from '@/components/ui/tooltip'
+import { ScrollToTop } from '@/components/layout/scroll-to-top'
 
 const LandingPage = lazy(() => import('@/pages/landing').then((m) => ({ default: m.LandingPage })))
 const PredictPage = lazy(() => import('@/pages/predict').then((m) => ({ default: m.PredictPage })))
@@ -25,6 +26,7 @@ function App() {
   return (
     <ThemeProvider>
       <TooltipProvider delayDuration={200}>
+        <ScrollToTop />
         <Suspense fallback={<RouteFallback />}>
           <Routes>
             <Route path="/" element={<LandingPage />} />

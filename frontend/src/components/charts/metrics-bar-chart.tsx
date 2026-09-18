@@ -1,11 +1,12 @@
-import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { Bar, BarChart, CartesianGrid, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import type { ModelMetrics } from '@/types'
 
 interface MetricsBarChartProps {
   metrics: ModelMetrics
 }
 
-const COLORS = ['hsl(217 91% 60%)', 'hsl(189 94% 48%)', 'hsl(262 83% 70%)', 'hsl(152 60% 45%)', 'hsl(38 92% 55%)']
+// Validated categorical palette (colorblind-safe, see dataviz skill) — one hue per metric
+const COLORS = ['var(--series-1)', 'var(--series-2)', 'var(--series-3)', 'var(--series-4)', 'var(--series-5)']
 
 export function MetricsBarChart({ metrics }: MetricsBarChartProps) {
   const data = [
@@ -18,8 +19,16 @@ export function MetricsBarChart({ metrics }: MetricsBarChartProps) {
 
   return (
     <ResponsiveContainer width="100%" height={280}>
-      <BarChart data={data} margin={{ top: 8, right: 8, left: -12, bottom: 0 }} barCategoryGap="28%">
-        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+      <BarChart data={data} margin={{ top: 24, right: 8, left: -12, bottom: 0 }} barCategoryGap="32%">
+        <defs>
+          {data.map((entry, index) => (
+            <linearGradient key={entry.name} id={`bar-gradient-${index}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={COLORS[index % COLORS.length]} stopOpacity={1} />
+              <stop offset="100%" stopColor={COLORS[index % COLORS.length]} stopOpacity={0.72} />
+            </linearGradient>
+          ))}
+        </defs>
+        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.6)" vertical={false} />
         <XAxis
           dataKey="name"
           tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
@@ -34,20 +43,30 @@ export function MetricsBarChart({ metrics }: MetricsBarChartProps) {
           tickFormatter={(v) => `${v}%`}
         />
         <Tooltip
-          cursor={{ fill: 'hsl(var(--muted) / 0.5)' }}
+          cursor={{ fill: 'hsl(var(--muted) / 0.5)', radius: 8 }}
           contentStyle={{
             background: 'hsl(var(--popover))',
             border: '1px solid hsl(var(--border))',
-            borderRadius: 8,
+            borderRadius: 10,
+            boxShadow: '0 8px 24px -8px rgb(0 0 0 / 0.25)',
             fontSize: 12,
             color: 'hsl(var(--popover-foreground))',
           }}
           formatter={(value) => [`${value}%`, 'Score']}
         />
-        <Bar dataKey="value" radius={[6, 6, 0, 0]} maxBarSize={48}>
+        <Bar dataKey="value" radius={[8, 8, 0, 0]} maxBarSize={44}>
           {data.map((entry, index) => (
-            <Cell key={entry.name} fill={COLORS[index % COLORS.length]} />
+            <Cell key={entry.name} fill={`url(#bar-gradient-${index})`} />
           ))}
+          <LabelList
+            dataKey="value"
+            position="top"
+            offset={10}
+            fill="hsl(var(--foreground))"
+            fontSize={12}
+            fontWeight={600}
+            formatter={(v: number) => `${v}%`}
+          />
         </Bar>
       </BarChart>
     </ResponsiveContainer>

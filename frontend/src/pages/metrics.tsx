@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import { BarChart3, Crosshair, Percent, RefreshCw, Target, TrendingUp } from 'lucide-react'
+import { Crosshair, LineChart, RefreshCw, Scale, SearchCheck, Target } from 'lucide-react'
 import { AppShell } from '@/components/layout/app-shell'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -49,7 +49,7 @@ export function MetricsPage() {
           <KpiCard
             label="Recall"
             value={metrics ? formatPercent(metrics.recall) : '—'}
-            icon={Percent}
+            icon={SearchCheck}
             accent="purple"
             loading={loading}
             index={2}
@@ -57,7 +57,7 @@ export function MetricsPage() {
           <KpiCard
             label="F1 Score"
             value={metrics ? formatPercent(metrics.f1_score) : '—'}
-            icon={BarChart3}
+            icon={Scale}
             accent="green"
             loading={loading}
             index={3}
@@ -65,7 +65,7 @@ export function MetricsPage() {
           <KpiCard
             label="ROC-AUC"
             value={metrics ? formatPercent(metrics.roc_auc) : '—'}
-            icon={TrendingUp}
+            icon={LineChart}
             accent="amber"
             loading={loading}
             index={4}
