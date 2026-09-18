@@ -110,7 +110,7 @@ export function MetricsPage() {
             </CardHeader>
             <CardContent>
               {loading || !metrics ? (
-                <Skeleton className="h-56 w-full" />
+                <Skeleton className="w-full h-56" />
               ) : (
                 <ConfusionMatrix matrix={metrics.confusion_matrix} />
               )}
@@ -125,9 +125,9 @@ export function MetricsPage() {
             <CardContent className="space-y-3 text-sm text-muted-foreground">
               {loading || !metrics ? (
                 <>
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-5/6" />
-                  <Skeleton className="h-4 w-4/6" />
+                  <Skeleton className="w-full h-4" />
+                  <Skeleton className="w-5/6 h-4" />
+                  <Skeleton className="w-4/6 h-4" />
                 </>
               ) : (
                 <>
@@ -149,7 +149,7 @@ export function MetricsPage() {
                     decision threshold for high-value accounts.
                   </p>
                   <p className="text-xs text-muted-foreground/80">
-                    Last evaluated {formatRelativeTime(metrics.updated_at)}.
+                    Last evaluated {metrics?.updated_at ? formatRelativeTime(metrics.updated_at) : 'recently'}.
                   </p>
                 </>
               )}

@@ -1,4 +1,6 @@
+from datetime import datetime, timezone
 from pathlib import Path
+import csv
 import sys
 import json
 
@@ -42,11 +44,40 @@ def health():
 @app.get("/model-info")
 def model_info():
     metrics_path = BASE_DIR / "reports" / "model_metrics.json"
+    train_x_path = BASE_DIR / "data" / "processed" / "split_data" / "X_train.csv"
+
     if not metrics_path.exists():
         raise HTTPException(status_code=404, detail="Model metrics not found")
 
     with open(metrics_path, "r", encoding="utf-8") as f:
-        return json.load(f)
+        report_info = json.load(f)
+
+    best_model_name = report_info["best_model"]
+    model_path = BASE_DIR / "models" / f"{best_model_name}.pkl"
+
+    if not model_path.exists():
+        raise HTTPException(status_code=404, detail="Model artifact not found")
+    if not train_x_path.exists():
+        raise HTTPException(status_code=404, detail="Training data not found")
+
+    with open(train_x_path, "r", encoding="utf-8", newline="") as f:
+        reader = csv.reader(f)
+        feature_count = len(next(reader))
+        dataset_size = sum(1 for _ in reader)
+
+    last_updated = datetime.fromtimestamp(model_path.stat().st_mtime, tz=timezone.utc).isoformat()
+    display_name = best_model_name.replace("_", " ").title()
+
+    return {
+        "name": f"{display_name} Churn Classifier",
+        "version": app.version,
+        "trainingStatus": "trained",
+        "lastUpdated": last_updated,
+        "pipelineHealth": "healthy",
+        "datasetSize": dataset_size,
+        "features": feature_count,
+        "algorithm": display_name,
+    }
 
 
 @app.get("/metrics")

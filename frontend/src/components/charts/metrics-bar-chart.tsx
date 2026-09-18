@@ -65,7 +65,7 @@ export function MetricsBarChart({ metrics }: MetricsBarChartProps) {
             fill="hsl(var(--foreground))"
             fontSize={12}
             fontWeight={600}
-            formatter={(v: number) => `${v}%`}
+            formatter={(v) => `${v}%`}
           />
         </Bar>
       </BarChart>

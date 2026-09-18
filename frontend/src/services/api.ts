@@ -5,6 +5,7 @@ import {
   MOCK_MODEL_INFO,
   MOCK_RECENT_PREDICTIONS,
 } from '@/data/mockData'
+import { getRecommendedAction, getRiskLevel } from '@/lib/risk'
 import type {
   HealthStatus,
   ModelInfo,
@@ -12,6 +13,7 @@ import type {
   PredictionRequest,
   PredictionResponse,
   RecentPrediction,
+  RiskLevel,
 } from '@/types'
 
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000'
@@ -45,8 +47,6 @@ async function withFallback<T>(
 }
 
 export async function getHealth() {
-  // Backend contract: GET /health -> { status: "ok" | "degraded" | "down" }.
-  // Only "ok" counts as live; anything else falls back to demo data.
   return withFallback(
     async () => {
       const res = await apiClient.get<HealthStatus>('/health')
@@ -72,8 +72,6 @@ export async function postPrediction(payload: PredictionRequest) {
 }
 
 export async function getMetrics() {
-  // Falls back to the last recorded evaluation report
-  // (backend/reports/evaluation_report.json) if the backend is unreachable.
   return withFallback(
     async () => {
       const res = await apiClient.get<ModelMetrics>('/metrics')
@@ -93,20 +91,56 @@ export async function getModelInfo() {
   )
 }
 
+type BackendRecentPredictionItem = {
+  id: number
+  created_at: string
+  model_name: string
+  prediction: 'Churn' | 'Not Churn'
+  probability: number
+  risk_level: RiskLevel
+  customer_payload: Record<string, unknown>
+}
+
+type BackendRecentPredictionsResponse = {
+  items: BackendRecentPredictionItem[]
+}
+
+function mapBackendRecentPrediction(item: BackendRecentPredictionItem): RecentPrediction {
+  const customerId = `PRED-${String(item.id).padStart(4, '0')}`
+
+  const gender = typeof item.customer_payload.gender === 'string' ? item.customer_payload.gender : null
+  const tenure = typeof item.customer_payload.tenure === 'number' ? item.customer_payload.tenure : null
+  const customerName =
+    gender && tenure !== null
+      ? `${gender} customer · ${tenure}m`
+      : `Customer #${item.id}`
+
+  const risk = item.risk_level ?? getRiskLevel(item.probability)
+
+  return {
+    id: String(item.id),
+    customerId,
+    customerName,
+    churnRisk: risk,
+    probability: item.probability,
+    prediction: item.prediction,
+    timestamp: item.created_at,
+    action: getRecommendedAction(risk),
+  }
+}
+
 export async function getRecentPredictions() {
-  // TODO(backend): GET /recent-predictions is not yet implemented server-side.
   return withFallback(
     async () => {
-      const res = await apiClient.get<RecentPrediction[]>('/recent-predictions')
-      return res.data
+      const res = await apiClient.get<BackendRecentPredictionsResponse>('/recent-predictions')
+      const items = Array.isArray(res.data.items) ? res.data.items : []
+      return items.map(mapBackendRecentPrediction)
     },
     MOCK_RECENT_PREDICTIONS,
   )
 }
 
 function mockPredictionFor(payload: PredictionRequest): PredictionResponse {
-  // Lightweight heuristic mirroring known churn drivers, purely so the demo
-  // response reacts sensibly to form input when the backend is offline.
   let score = 0.18
 
   if (payload.Contract === 'Month-to-month') score += 0.22

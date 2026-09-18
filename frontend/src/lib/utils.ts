@@ -17,9 +17,15 @@ export function formatCurrency(value: number) {
   }).format(value)
 }
 
-export function formatRelativeTime(iso: string) {
+export function formatRelativeTime(iso?: string | null) {
+  if (!iso) return 'just now'
+
   const date = new Date(iso)
-  const diffMs = date.getTime() - Date.now()
+  const time = date.getTime()
+
+  if (Number.isNaN(time)) return 'just now'
+
+  const diffMs = time - Date.now()
   const diffMin = Math.round(diffMs / 60000)
   const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' })
 
