@@ -30,7 +30,7 @@ docker compose up -d --build
 |----------|-----------------------|
 | Frontend | http://localhost:5173 |
 | Backend  | http://localhost:8000 |
-| MLflow   | http://localhost:5000 |
+| MLflow   | http://localhost:8088 |
 
 Re-train the model:
 ```bash
@@ -51,7 +51,9 @@ Full interactive docs: `http://localhost:8000/docs`
 
 ## MLflow
 
-All training runs are logged under the `CustomerPulse-AI` experiment. Open the UI at `http://localhost:5000` to compare runs, metrics, and parameters.
+All training runs are logged under the `CustomerPulse-AI` experiment. Open the UI at `http://localhost:8088` to compare runs, metrics, and parameters.
+
+> Runs on `8088` instead of the default `5000` — Windows reserves large blocks of ports (including most of `4500-5150`) for its dynamic Hyper-V/WSL2 NAT on many machines, which blocks Docker's port bind.
 
 ## Screenshots
 

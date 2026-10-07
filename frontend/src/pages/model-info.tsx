@@ -95,7 +95,7 @@ export function ModelInfoPage() {
             </div>
 
             <Button asChild className="w-full">
-              <a href={mlflowInfo?.ui_url ?? 'http://127.0.0.1:5000'} target="_blank" rel="noreferrer">
+              <a href={mlflowInfo?.ui_url ?? 'http://127.0.0.1:8088'} target="_blank" rel="noreferrer">
                 Open MLflow UI <ExternalLink className="h-4 w-4" />
               </a>
             </Button>

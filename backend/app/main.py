@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from pathlib import Path
 import csv
+import os
 import sys
 import json
 
@@ -46,8 +47,8 @@ def mlflow_info():
     return {
         "status": "connected",
         "experiment_name": "CustomerPulse-AI",
-        "tracking_uri": "http://127.0.0.1:5000",
-        "ui_url": "http://127.0.0.1:5000",
+        "tracking_uri": os.getenv("MLFLOW_TRACKING_URI", "http://127.0.0.1:8088"),
+        "ui_url": os.getenv("MLFLOW_UI_URL", "http://127.0.0.1:8088"),
     }
 
 

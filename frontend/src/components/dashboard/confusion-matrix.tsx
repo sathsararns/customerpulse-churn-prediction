@@ -31,10 +31,10 @@ export function ConfusionMatrix({ matrix }: ConfusionMatrixProps) {
       </div>
       <div className="grid grid-cols-[auto_1fr_1fr] gap-2">
         <div className="flex flex-col justify-center gap-2 text-[11px] font-medium text-muted-foreground">
-          <div className="flex h-24 items-center justify-end pr-2">Actual: Not Churn</div>
-          <div className="flex h-24 items-center justify-end pr-2">Actual: Churn</div>
+          <div className="flex items-center justify-end h-24 pr-2">Actual: Not Churn</div>
+          <div className="flex items-center justify-end h-24 pr-2">Actual: Churn</div>
         </div>
-        <div className="col-span-2 grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 col-span-2 gap-2">
           {cells.map((cell) => {
             const intensity = 0.25 + 0.65 * (cell.value / max)
             return (
@@ -56,7 +56,7 @@ export function ConfusionMatrix({ matrix }: ConfusionMatrixProps) {
           })}
         </div>
       </div>
-      <p className="mt-3 text-center text-xs text-muted-foreground">
+      <p className="mt-3 text-xs text-center text-muted-foreground">
         {total.toLocaleString()} total evaluated samples
       </p>
     </div>

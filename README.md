@@ -151,7 +151,7 @@ This starts three services:
 |-----------|--------------------------|-------------------------------|
 | Frontend  | http://localhost:5173    | React dashboard               |
 | Backend   | http://localhost:8000    | FastAPI churn prediction API  |
-| MLflow    | http://localhost:5000    | Experiment tracking UI        |
+| MLflow    | http://localhost:8088    | Experiment tracking UI        |
 
 To stop everything:
 
@@ -192,8 +192,19 @@ npm run dev
 
 **MLflow** (local, no Docker)
 ```bash
-mlflow server --host 0.0.0.0 --port 5000
+mlflow server --host 0.0.0.0 --port 8088
 ```
+
+> **Note:** MLflow runs on port `8088` (not the default `5000`) because Windows
+> reserves blocks of ports for its dynamic Hyper-V/WSL2 NAT (`netsh interface
+> ipv4 show excludedportrange protocol=tcp`), and on many machines those
+> excluded ranges cover most of the `4500-5150` block — which is why Docker's
+> `5000:5000` bind (and even a `5050:5000` remap) can fail with a permissions
+> error. `8088` sits well outside the typical excluded ranges. If it's ever
+> reserved on your machine too, check the command above and pick another free
+> port outside the ranges it lists, then update it consistently across
+> `docker-compose.yml`, the backend's `MLFLOW_TRACKING_URI`/`MLFLOW_UI_URL`,
+> and this README.
 
 ## API Endpoints
 
@@ -259,12 +270,12 @@ CustomerPulse AI uses **MLflow** to track every model training run under the exp
 **Access the MLflow UI:**
 
 ```
-http://localhost:5000
+http://localhost:8088
 ```
 
 **How it's wired up:**
-- The `mlflow` service in `docker-compose.yml` runs `mlflow server` with a SQLite backend store (`mlflow-data/mlflow.db`) and a local artifact root (`mlflow-data/artifacts`).
-- The `backend` service points at it via the `MLFLOW_TRACKING_URI` environment variable (`http://mlflow:5000` inside Docker, or `http://127.0.0.1:5000` when running locally).
+- The `mlflow` service in `docker-compose.yml` runs `mlflow server` with a SQLite backend store (`mlflow-data/mlflow.db`) and a local artifact root (`mlflow-data/artifacts`). It still listens on port `5000` *inside* the container; only the host-side mapping is `8088:5000`, so the container-to-container traffic between `backend` and `mlflow` is untouched.
+- The `backend` service points at it via the `MLFLOW_TRACKING_URI` environment variable (`http://mlflow:5000` inside Docker, since that's internal container-to-container traffic on the Docker network, or `http://127.0.0.1:8088` when running locally without Docker). The browser-facing link shown in the dashboard comes from `MLFLOW_UI_URL` (`http://localhost:8088`).
 - Each run of `pipelines/training_pipeline.py` logs a new MLflow run automatically — no extra setup required.
 
 ## Screenshots

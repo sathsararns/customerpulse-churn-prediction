@@ -67,6 +67,6 @@ export const MOCK_HEALTH = {
 export const MOCK_MLFLOW_INFO = {
   status: 'unreachable',
   experiment_name: 'CustomerPulse-AI',
-  tracking_uri: 'http://127.0.0.1:5000',
-  ui_url: 'http://127.0.0.1:5000',
+  tracking_uri: 'http://127.0.0.1:8088',
+  ui_url: 'http://127.0.0.1:8088',
 }

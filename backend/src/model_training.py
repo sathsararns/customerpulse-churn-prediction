@@ -15,7 +15,7 @@ sys.path.append(str(BASE_DIR))
 from src.model_building import build_models
 
 
-MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", "http://127.0.0.1:5000")
+MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", "http://127.0.0.1:8088")
 MLFLOW_EXPERIMENT_NAME = "CustomerPulse-AI"
 
 
