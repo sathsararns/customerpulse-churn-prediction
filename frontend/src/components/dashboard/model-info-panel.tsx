@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { StatusBadge } from '@/components/dashboard/status-badge'
-import { formatRelativeTime } from '@/lib/utils'
+import { cn, formatRelativeTime } from '@/lib/utils'
 import type { ModelInfo } from '@/types'
 
 interface ModelInfoPanelProps {
@@ -36,7 +36,7 @@ export function ModelInfoPanel({ info, loading }: ModelInfoPanelProps) {
   const rows = [
     { icon: GitBranch, label: 'Version', value: info.version },
     { icon: History, label: 'Last updated', value: formatRelativeTime(info.lastUpdated) },
-    { icon: Database, label: 'Training set size', value: `${info.datasetSize.toLocaleString()} rows` },
+    { icon: Database, label: 'Dataset size', value: `${info.datasetSize.toLocaleString()} rows` },
     { icon: Layers, label: 'Feature count', value: `${info.features} features` },
   ]
 
@@ -75,9 +75,9 @@ export function ModelInfoPanel({ info, loading }: ModelInfoPanelProps) {
 
         <Separator />
 
-        <div className="flex items-center gap-2 rounded-lg bg-success/10 px-3 py-2.5 text-xs font-medium text-success">
+        <div className={cn("flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs font-medium", info.pipelineHealth === "healthy" ? "bg-success/10 text-success" : "bg-warning/10 text-warning")}>
           <HeartPulse className="h-4 w-4" />
-          Pipeline running nominally — no drift detected
+          Model serving status: {info.pipelineHealth}
         </div>
       </CardContent>
     </Card>

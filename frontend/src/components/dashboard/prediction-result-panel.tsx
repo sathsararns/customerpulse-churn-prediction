@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/dashboard/empty-state'
 import { RiskBadge } from '@/components/dashboard/risk-badge'
-import { getRecommendedAction, getRiskLevel } from '@/lib/risk'
+import { getRecommendedAction } from '@/lib/risk'
 import { cn, formatPercent } from '@/lib/utils'
 import type { PredictionResponse } from '@/types'
 
@@ -58,7 +58,7 @@ export function PredictionResultPanel({ result, loading }: PredictionResultPanel
 }
 
 function ResultContent({ result }: { result: PredictionResponse }) {
-  const risk = getRiskLevel(result.probability)
+  const risk = result.risk_level
   const isChurn = result.prediction === 'Churn'
   const action = getRecommendedAction(risk)
   const pct = Math.round(result.probability * 100)
@@ -124,6 +124,7 @@ function ResultContent({ result }: { result: PredictionResponse }) {
 
       <p className="text-center text-[11px] text-muted-foreground">
         Scored by <span className="font-medium text-foreground">{result.model}</span>
+        <span className="mt-1 block break-all">Version: {result.model_version}</span>
       </p>
     </motion.div>
   )

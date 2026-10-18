@@ -8,6 +8,7 @@ import {
   X,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { DEMO_MODE } from '@/services/api'
 import { Separator } from '@/components/ui/separator'
 
 const NAV_ITEMS = [
@@ -20,9 +21,11 @@ const NAV_ITEMS = [
 interface SidebarProps {
   mobileOpen: boolean
   onClose: () => void
+  serviceStatus: string
+  modelVersion?: string | null
 }
 
-export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
+export function Sidebar({ mobileOpen, onClose, serviceStatus, modelVersion }: SidebarProps) {
   return (
     <>
       {mobileOpen && (
@@ -88,12 +91,10 @@ export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
           <div className="rounded-xl border border-sidebar-border bg-gradient-to-br from-primary/10 via-transparent to-transparent p-4">
             <p className="text-xs font-semibold text-foreground">Model status</p>
             <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-75" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-success" />
-              </span>
-              Pipeline healthy
+              <span className={cn('h-2 w-2 rounded-full', serviceStatus === 'ok' && !DEMO_MODE ? 'bg-success' : 'bg-warning')} />
+              {DEMO_MODE ? 'Demo mode' : serviceStatus === 'ok' ? 'Model ready' : serviceStatus === 'checking' ? 'Checking API' : serviceStatus === 'offline' ? 'API unavailable' : 'Service degraded'}
             </p>
+            {modelVersion && <p className="mt-2 break-all text-[10px] text-muted-foreground">{modelVersion}</p>}
           </div>
         </div>
       </aside>

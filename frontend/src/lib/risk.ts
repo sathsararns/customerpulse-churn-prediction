@@ -1,8 +1,8 @@
 import type { RiskLevel } from '@/types'
 
 export function getRiskLevel(probability: number): RiskLevel {
-  if (probability >= 0.66) return 'High'
-  if (probability >= 0.33) return 'Medium'
+  if (probability >= 0.7) return 'High'
+  if (probability >= 0.4) return 'Medium'
   return 'Low'
 }
 

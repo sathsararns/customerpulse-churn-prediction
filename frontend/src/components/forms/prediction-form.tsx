@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { CreditCard, Loader2, RotateCcw, User, Wifi, Wallet, Zap } from 'lucide-react'
@@ -31,6 +32,8 @@ export function PredictionForm({ onSubmit, submitting }: PredictionFormProps) {
     handleSubmit,
     reset,
     watch,
+    getValues,
+    setValue,
     formState: { errors, isDirty },
   } = useForm<PredictionFormValues>({
     resolver: zodResolver(predictionFormSchema),
@@ -41,10 +44,20 @@ export function PredictionForm({ onSubmit, submitting }: PredictionFormProps) {
   const phoneService = watch('PhoneService')
   const internetService = watch('InternetService')
   const hasInternet = internetService !== 'No'
+  useEffect(() => {
+    if (phoneService === 'No') setValue('MultipleLines', 'No phone service')
+    else if (getValues('MultipleLines') === 'No phone service') setValue('MultipleLines', 'No')
+    const fields = ['OnlineSecurity', 'OnlineBackup', 'DeviceProtection', 'TechSupport', 'StreamingTV', 'StreamingMovies'] as const
+    for (const field of fields) {
+      if (internetService === 'No') setValue(field, 'No internet service')
+      else if (getValues(field) === 'No internet service') setValue(field, 'No')
+    }
+  }, [phoneService, internetService, getValues, setValue])
 
   function submit(values: PredictionFormValues) {
     const payload: PredictionRequest = {
       ...values,
+      customer_id: values.customer_id?.trim() || undefined,
       SeniorCitizen: values.SeniorCitizen === '1' ? 1 : 0,
       tenure: Number(values.tenure),
       MonthlyCharges: Number(values.MonthlyCharges),
@@ -65,6 +78,14 @@ export function PredictionForm({ onSubmit, submitting }: PredictionFormProps) {
       <form onSubmit={handleSubmit(submit)} noValidate>
         <CardContent className="space-y-8">
           <FormSection icon={User} title="Personal info">
+            <div className="space-y-2">
+              <label className="text-sm font-medium" htmlFor="customer-id">Customer ID (optional)</label>
+              <input id="customer-id" {...register('customer_id')} maxLength={128}
+                placeholder="e.g. CUST-001"
+                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" />
+              <p className="text-xs text-muted-foreground">Links this prediction to a customer in your history.</p>
+              {errors.customer_id && <p className="text-xs text-destructive">{errors.customer_id.message}</p>}
+            </div>
             <SelectField
               control={control}
               name="gender"

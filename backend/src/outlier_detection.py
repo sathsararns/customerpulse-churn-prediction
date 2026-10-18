@@ -1,7 +1,15 @@
 from pathlib import Path
 import pandas as pd
 
-NUMERIC_COLS = ["SeniorCitizen", "tenure", "MonthlyCharges", "TotalCharges"]
+NUMERIC_COLS = ["tenure", "MonthlyCharges", "TotalCharges"]
+
+
+def continuous_columns(df, columns=None):
+    """Exclude known flags and binary-valued fields even in explicit requests."""
+    candidates = NUMERIC_COLS if columns is None else columns
+    return [col for col in candidates if col in df.columns
+            and col not in {"SeniorCitizen", "Churn"}
+            and not set(df[col].dropna().unique()).issubset({0, 1})]
 
 
 def load_data(file_path: str | Path) -> pd.DataFrame:
@@ -12,8 +20,7 @@ def detect_outliers_iqr(df: pd.DataFrame, columns=None):
     """
     Detect outliers using IQR method.
     """
-    if columns is None:
-        columns = df.select_dtypes(include=["int64", "float64"]).columns.tolist()
+    columns = continuous_columns(df, columns)
 
     summary = {}
 
@@ -45,8 +52,7 @@ def cap_outliers_iqr(df: pd.DataFrame, columns=None) -> pd.DataFrame:
     """
     df = df.copy()
 
-    if columns is None:
-        columns = df.select_dtypes(include=["int64", "float64"]).columns.tolist()
+    columns = continuous_columns(df, columns)
 
     for col in columns:
         if col not in df.columns:

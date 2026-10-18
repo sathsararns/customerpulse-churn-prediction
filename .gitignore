@@ -1,0 +1,37 @@
+# Credentials and local configuration
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+.aws/
+
+# Python environments and generated files
+**/.venv/
+**/.venv-*/
+**/venv/
+**/__pycache__/
+*.py[cod]
+**/.pytest_cache/
+**/pytest-cache-*/
+**/.ruff_cache/
+*.log
+
+# Local datasets, history, trained artifacts and reports
+backend/artifacts/
+backend/models/
+backend/reports/
+backend/data/processed/
+*.db
+*.db-shm
+*.db-wal
+mlflow-data/
+mlruns/
+mlartifacts/
+
+# Frontend build output
+**/node_modules/
+frontend/dist/
+*.tsbuildinfo
+.DS_Store

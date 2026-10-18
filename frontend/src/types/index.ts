@@ -1,6 +1,7 @@
 export type YesNo = 'Yes' | 'No'
 
 export interface PredictionRequest {
+  customer_id?: string
   gender: 'Female' | 'Male'
   SeniorCitizen: 0 | 1
   Partner: YesNo
@@ -27,14 +28,21 @@ export interface PredictionRequest {
 }
 
 export interface PredictionResponse {
+  event_id?: string
+  customer_id?: string | null
+  source?: 'api'
   prediction: 'Churn' | 'Not Churn'
   probability: number
   model: string
+  model_version: string
+  risk_level: RiskLevel
 }
 
 export type RiskLevel = 'Low' | 'Medium' | 'High'
 
 export interface ModelMetrics {
+  model_version: string
+  prediction_threshold: number
   accuracy: number
   precision: number
   recall: number
@@ -47,6 +55,7 @@ export interface ModelMetrics {
 export interface ModelInfo {
   name: string
   version: string
+  predictionThreshold: number
   trainingStatus: 'trained' | 'training' | 'idle' | 'failed'
   lastUpdated: string
   pipelineHealth: 'healthy' | 'degraded' | 'down'
@@ -56,6 +65,9 @@ export interface ModelInfo {
 }
 
 export interface RecentPrediction {
+  eventId?: string
+  source?: 'api' | 'batch' | 'stream' | 'legacy'
+  modelVersion: string | null
   id: string
   customerId: string
   customerName: string
@@ -68,10 +80,48 @@ export interface RecentPrediction {
 
 export interface HealthStatus {
   status: 'ok' | 'degraded' | 'down'
+  ready: boolean
+  model_version: string | null
+  selected_model_version: string | null
+  reload_required: boolean
+  predictionCount: number | null
   uptimeSeconds?: number
   version?: string
 }
 
 export interface DataSource {
   isLive: boolean
+}
+
+export interface MlflowInfo {
+  status: 'connected' | 'disconnected' | 'demo'
+  experiment_name: string
+  tracking_uri: string
+  ui_url: string
+  checked_at: string
+  detail: string | null
+  kind?: string
+}
+
+export interface PipelineStage {
+  id: string
+  label: string
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'skipped'
+  started_at: string | null
+  completed_at: string | null
+  message: string | null
+}
+
+export interface PipelineStatus {
+  run: {
+    run_id: string
+    model_version: string
+    status: 'running' | 'completed' | 'failed'
+    started_at: string
+    completed_at: string | null
+    error: string | null
+    stages: PipelineStage[]
+  } | null
+  serving_model_version: string | null
+  selected_model_version: string | null
 }

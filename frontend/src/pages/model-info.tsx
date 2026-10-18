@@ -1,139 +1,56 @@
-import { useCallback } from 'react'
-import { ExternalLink, FlaskConical, ShieldCheck, Sparkles } from 'lucide-react'
+import { ExternalLink, FlaskConical, RefreshCw, ShieldCheck } from 'lucide-react'
 import { AppShell } from '@/components/layout/app-shell'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { ResourceError } from '@/components/dashboard/resource-error'
+import { PipelineHealth } from '@/components/dashboard/pipeline-health'
 import { useApiResource } from '@/hooks/use-api-resource'
-import { getMetrics, getMlflowInfo, getModelInfo } from '@/services/api'
+import { DEMO_MODE, getMetrics, getMlflowInfo, getModelInfo } from '@/services/api'
 import { formatPercent } from '@/lib/utils'
 
 export function ModelInfoPage() {
-  const modelFetcher = useCallback(() => getModelInfo(), [])
-  const metricsFetcher = useCallback(() => getMetrics(), [])
-  const mlflowFetcher = useCallback(() => getMlflowInfo(), [])
-
-  const { data: modelInfo, loading: modelLoading, isLive: modelLive } = useApiResource(modelFetcher)
-  const { data: metrics, loading: metricsLoading } = useApiResource(metricsFetcher)
-  const { data: mlflowInfo, isLive: mlflowLive } = useApiResource(mlflowFetcher)
-
+  const model = useApiResource(getModelInfo, 15000)
+  const metrics = useApiResource(getMetrics, 15000)
+  const tracking = useApiResource(getMlflowInfo, 10000)
+  const compatible = metrics.data && model.data && metrics.data.model_version === model.data.version
+  const connected = tracking.data?.status === 'connected'
+  const refresh = () => { void model.refetch(); void metrics.refetch(); void tracking.refetch() }
   return (
-    <AppShell
-      title="Model Info"
-      description="Model summary, training metrics, and MLflow tracking details"
-      isLive={modelLoading ? undefined : modelLive}
-    >
+    <AppShell title="Model Info" description="Loaded model, recorded training state, and tracking connectivity"
+      isLive={model.loading ? undefined : model.isLive}
+      actions={<Button variant="outline" size="sm" onClick={refresh}><RefreshCw />Refresh</Button>}>
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5" />
-              Production model
-            </CardTitle>
-            <CardDescription>Best model selected from the training pipeline</CardDescription>
-          </CardHeader>
+          <CardHeader><CardTitle className="flex items-center gap-2"><ShieldCheck className="h-5 w-5" />Serving model</CardTitle><CardDescription>The version loaded by the API at startup</CardDescription></CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center justify-between rounded-xl border p-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Model name</p>
-                <p className="text-lg font-semibold">
-                  {modelLoading ? 'Loading...' : (modelInfo?.name ?? '—')}
-                </p>
-              </div>
-              <Badge variant={modelLive ? 'default' : 'secondary'}>{modelLive ? 'Live' : 'Demo'}</Badge>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              <MetricTile
-                label="Accuracy"
-                value={metrics && !metricsLoading ? formatPercent(metrics.accuracy, 2) : '—'}
-              />
-              <MetricTile
-                label="Precision"
-                value={metrics && !metricsLoading ? formatPercent(metrics.precision, 2) : '—'}
-              />
-              <MetricTile
-                label="Recall"
-                value={metrics && !metricsLoading ? formatPercent(metrics.recall, 2) : '—'}
-              />
-              <MetricTile
-                label="F1 Score"
-                value={metrics && !metricsLoading ? formatPercent(metrics.f1_score, 2) : '—'}
-              />
-              <MetricTile
-                label="ROC AUC"
-                value={metrics && !metricsLoading ? formatPercent(metrics.roc_auc, 2) : '—'}
-              />
-            </div>
+            {model.error ? <ResourceError message={model.error} onRetry={model.refetch} /> : <>
+              <p className="text-lg font-semibold">{model.data?.name ?? 'Loading...'}</p>
+              <p className="break-all text-xs text-muted-foreground">Version: {model.data?.version ?? 'Loading...'}</p>
+              <p className="text-sm">Decision threshold: {model.data ? formatPercent(model.data.predictionThreshold) : '--'}</p>
+              {metrics.error ? <ResourceError message={metrics.error} onRetry={metrics.refetch} /> : compatible ? (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {(['accuracy', 'precision', 'recall', 'f1_score', 'roc_auc'] as const).map((key) => (
+                    <div key={key} className="rounded-xl border p-3"><p className="text-xs uppercase text-muted-foreground">{key.replaceAll('_', ' ')}</p><p className="mt-1 font-semibold">{formatPercent(metrics.data![key], 2)}</p></div>
+                  ))}
+                </div>
+              ) : <p className="text-sm text-muted-foreground">{metrics.loading || model.loading ? 'Loading matching metrics...' : 'Model and metric versions differ. Refresh the details.'}</p>}
+            </>}
           </CardContent>
         </Card>
-
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FlaskConical className="h-5 w-5" />
-              MLflow tracking
-            </CardTitle>
-            <CardDescription>Experiment tracking for training runs and metrics</CardDescription>
-          </CardHeader>
+          <CardHeader><CardTitle className="flex items-center gap-2"><FlaskConical className="h-5 w-5" />MLflow tracking store</CardTitle><CardDescription>Connectivity checked by the backend</CardDescription></CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center justify-between rounded-xl border p-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Experiment</p>
-                <p className="text-lg font-semibold">{mlflowInfo?.experiment_name ?? 'Loading...'}</p>
-              </div>
-              <Badge variant={mlflowLive ? 'default' : 'secondary'}>{mlflowLive ? 'Tracked' : 'Offline'}</Badge>
-            </div>
-
-            <div className="space-y-2 rounded-xl border p-4 text-sm">
-              <p>
-                <span className="text-muted-foreground">Tracking URI:</span> {mlflowInfo?.tracking_uri ?? '—'}
-              </p>
-              <p>
-                <span className="text-muted-foreground">Status:</span> {mlflowInfo?.status ?? '—'}
-              </p>
-            </div>
-
-            <Button asChild className="w-full">
-              <a href={mlflowInfo?.ui_url ?? 'http://127.0.0.1:8088'} target="_blank" rel="noreferrer">
-                Open MLflow UI <ExternalLink className="h-4 w-4" />
-              </a>
-            </Button>
+            {tracking.error ? <ResourceError message={tracking.error} onRetry={tracking.refetch} /> : <>
+              <div className="flex items-center justify-between gap-3"><p className="font-semibold">{tracking.data?.experiment_name ?? 'Checking...'}</p><Badge variant={connected ? 'default' : 'secondary'}>{DEMO_MODE ? 'Demo' : tracking.loading ? 'Checking' : connected ? 'Connected' : 'Disconnected'}</Badge></div>
+              <p className="break-all text-xs text-muted-foreground">{tracking.data?.tracking_uri}</p>
+              <p className="text-sm">{tracking.data?.detail}</p>
+              {tracking.data && <Button asChild variant="outline"><a href={tracking.data.ui_url} target="_blank" rel="noreferrer">Open MLflow UI<ExternalLink className="h-4 w-4" /></a></Button>}
+            </>}
           </CardContent>
         </Card>
       </div>
-
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5" />
-            What this model is optimized for
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-3">
-          <InfoPill title="Churn scoring" text="Predicts customers likely to leave." />
-          <InfoPill title="Retention action" text="Supports proactive outreach." />
-          <InfoPill title="Tracked runs" text="Each training run is logged in MLflow." />
-        </CardContent>
-      </Card>
+      <Card className="mt-6"><CardHeader><CardTitle>Recorded pipeline run</CardTitle><CardDescription>Observed stages from the most recent training command</CardDescription></CardHeader><CardContent><PipelineHealth /></CardContent></Card>
     </AppShell>
-  )
-}
-
-function MetricTile({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-xl border p-3">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="mt-1 text-base font-semibold">{value}</p>
-    </div>
-  )
-}
-
-function InfoPill({ title, text }: { title: string; text: string }) {
-  return (
-    <div className="rounded-xl border p-4">
-      <p className="font-medium">{title}</p>
-      <p className="mt-1 text-sm text-muted-foreground">{text}</p>
-    </div>
   )
 }

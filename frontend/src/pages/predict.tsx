@@ -3,18 +3,22 @@ import { toast } from 'sonner'
 import { AppShell } from '@/components/layout/app-shell'
 import { PredictionForm } from '@/components/forms/prediction-form'
 import { PredictionResultPanel } from '@/components/dashboard/prediction-result-panel'
-import { postPrediction, notifyRecentPredictionsChanged } from '@/services/api'
-import { getRiskLevel } from '@/lib/risk'
+import { apiErrorMessage, postPrediction, notifyRecentPredictionsChanged } from '@/services/api'
+import { ResourceError } from '@/components/dashboard/resource-error'
 import type { PredictionRequest, PredictionResponse } from '@/types'
 
 export function PredictPage() {
   const [result, setResult] = useState<PredictionResponse | null>(null)
+  const [lastPayload, setLastPayload] = useState<PredictionRequest | null>(null)
+  const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [isLive, setIsLive] = useState<boolean | undefined>(undefined)
 
   async function handleSubmit(payload: PredictionRequest) {
+    setLastPayload(payload)
     setSubmitting(true)
     setResult(null)
+    setError(null)
     try {
       const { data, isLive: live } = await postPrediction(payload)
       setResult(data)
@@ -24,10 +28,10 @@ export function PredictPage() {
         notifyRecentPredictionsChanged()
       }
 
-      const risk = getRiskLevel(data.probability)
+      const risk = data.risk_level
       if (!live) {
-        toast.warning('Prediction generated from demo data', {
-          description: 'The /predict endpoint is unreachable — showing a heuristic estimate instead.',
+        toast.warning('Demo prediction generated', {
+          description: 'Explicit demo mode is enabled; this is an illustrated estimate.',
         })
       } else if (risk === 'High') {
         toast.error('High churn risk detected', {
@@ -38,9 +42,12 @@ export function PredictPage() {
           description: `Model returned ${data.prediction} at ${(data.probability * 100).toFixed(1)}% probability.`,
         })
       }
-    } catch {
+    } catch (cause) {
+      setIsLive(false)
+      const message = apiErrorMessage(cause)
+      setError(message)
       toast.error('Prediction failed', {
-        description: 'Something went wrong while scoring this customer. Please try again.',
+        description: message,
       })
     } finally {
       setSubmitting(false)
@@ -53,6 +60,7 @@ export function PredictPage() {
       description="Score a customer profile against the production churn model"
       isLive={isLive}
     >
+      {error && <div className="mb-5"><ResourceError message={error} onRetry={() => { if (lastPayload) void handleSubmit(lastPayload) }} /></div>}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_380px]">
         <PredictionForm onSubmit={handleSubmit} submitting={submitting} />
         <PredictionResultPanel result={result} loading={submitting} />

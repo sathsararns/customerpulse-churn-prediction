@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 export const predictionFormSchema = z
   .object({
+    customer_id: z.string().trim().max(128, 'Use at most 128 characters').optional(),
     gender: z.enum(['Female', 'Male']),
     SeniorCitizen: z.enum(['0', '1']),
     Partner: z.enum(['Yes', 'No']),
@@ -37,14 +38,21 @@ export const predictionFormSchema = z
       .min(0, 'Must be positive')
       .max(50000, 'Value looks too high'),
   })
-  .refine((data) => data.PhoneService === 'Yes' || data.MultipleLines === 'No phone service', {
-    message: 'Multiple lines must be "No phone service" when phone service is off',
-    path: ['MultipleLines'],
+  .superRefine((data, context) => {
+    if ((data.PhoneService === 'No') !== (data.MultipleLines === 'No phone service')) {
+      context.addIssue({ code: 'custom', path: ['MultipleLines'], message: 'Multiple lines must match the phone service selection' })
+    }
+    for (const field of ['OnlineSecurity', 'OnlineBackup', 'DeviceProtection', 'TechSupport', 'StreamingTV', 'StreamingMovies'] as const) {
+      if ((data.InternetService === 'No') !== (data[field] === 'No internet service')) {
+        context.addIssue({ code: 'custom', path: [field], message: 'This option must match the internet service selection' })
+      }
+    }
   })
 
 export type PredictionFormValues = z.infer<typeof predictionFormSchema>
 
 export const defaultPredictionFormValues: PredictionFormValues = {
+  customer_id: '',
   gender: 'Female',
   SeniorCitizen: '0',
   Partner: 'Yes',

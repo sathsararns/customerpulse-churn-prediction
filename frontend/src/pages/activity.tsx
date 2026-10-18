@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { RefreshCw, Search } from 'lucide-react'
+import { ResourceError } from '@/components/dashboard/resource-error'
 import { AppShell } from '@/components/layout/app-shell'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -10,7 +11,7 @@ import { getRecentPredictions, RECENT_PREDICTIONS_REFRESH_EVENT } from '@/servic
 
 export function ActivityPage() {
   const fetcher = useCallback(() => getRecentPredictions(), [])
-  const { data: predictions, isLive, loading, refetch } = useApiResource(fetcher)
+  const { data: predictions, isLive, loading, error, refetch } = useApiResource(fetcher, 5000)
   const [query, setQuery] = useState('')
 
   useEffect(() => {
@@ -33,6 +34,8 @@ export function ActivityPage() {
     )
   }, [predictions, query])
 
+  if (error) return <AppShell title="Recent Activity" isLive={false}><ResourceError message={error} onRetry={refetch} /></AppShell>
+
   return (
     <AppShell
       title="Recent Activity"
@@ -49,7 +52,7 @@ export function ActivityPage() {
         <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <CardTitle>Prediction history</CardTitle>
-            <CardDescription>{predictions?.length ?? 0} records in the current window</CardDescription>
+            <CardDescription>{predictions?.length ?? 0} records in the current window; refreshes every 5 seconds</CardDescription>
           </div>
           <div className="relative w-full sm:w-64">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

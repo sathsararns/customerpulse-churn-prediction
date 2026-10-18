@@ -1,44 +1,164 @@
 {
-    "accuracy": 0.7970191625266146,
-    "precision": 0.6375,
-    "recall": 0.5454545454545454,
-    "f1_score": 0.5878962536023055,
-    "roc_auc": 0.8403446226975639,
-    "confusion_matrix": [
-        [
-            919,
-            116
-        ],
-        [
-            170,
-            204
-        ]
+  "accuracy": 0.8055358410220014,
+  "precision": 0.6572327044025157,
+  "recall": 0.5588235294117647,
+  "f1_score": 0.6040462427745664,
+  "roc_auc": 0.8418378154951046,
+  "confusion_matrix": [
+    [
+      926,
+      109
     ],
-    "classification_report": {
-        "0": {
-            "precision": 0.8438934802571166,
-            "recall": 0.8879227053140096,
-            "f1-score": 0.8653483992467044,
-            "support": 1035.0
-        },
-        "1": {
-            "precision": 0.6375,
-            "recall": 0.5454545454545454,
-            "f1-score": 0.5878962536023055,
-            "support": 374.0
-        },
-        "accuracy": 0.7970191625266146,
-        "macro avg": {
-            "precision": 0.7406967401285582,
-            "recall": 0.7166886253842775,
-            "f1-score": 0.7266223264245049,
-            "support": 1409.0
-        },
-        "weighted avg": {
-            "precision": 0.7891091214095924,
-            "recall": 0.7970191625266146,
-            "f1-score": 0.7917024784014203,
-            "support": 1409.0
-        }
+    [
+      165,
+      209
+    ]
+  ],
+  "classification_report": {
+    "0": {
+      "precision": 0.8487626031164069,
+      "recall": 0.8946859903381642,
+      "f1-score": 0.8711194731890874,
+      "support": 1035.0
+    },
+    "1": {
+      "precision": 0.6572327044025157,
+      "recall": 0.5588235294117647,
+      "f1-score": 0.6040462427745664,
+      "support": 374.0
+    },
+    "accuracy": 0.8055358410220014,
+    "macro avg": {
+      "precision": 0.7529976537594614,
+      "recall": 0.7267547598749644,
+      "f1-score": 0.7375828579818269,
+      "support": 1409.0
+    },
+    "weighted avg": {
+      "precision": 0.7979235810305337,
+      "recall": 0.8055358410220014,
+      "f1-score": 0.8002284950662835,
+      "support": 1409.0
     }
+  },
+  "model_version": "churn-20261017T054900498887Z-70c5db37",
+  "dataset_version": "data-88be4b93fbe0-01f985d67ec9",
+  "dataset_sha256": "88be4b93fbe0cc83421af1c503794c97c342eca914c1576db7c276e61d61358a",
+  "normalized_sha256": "e84d4884bb16c333057d485969e8b9038060b46a93818e9a1bf4f13f870f6a1e",
+  "git_commit": "7b5f79708d1ba994458d6a627af93d06440dff7c",
+  "git_dirty": true,
+  "source_sha256": "f9038496c52ec417699e04c82afd0be1363bbdf6e9f18d5cf019be73807bf434",
+  "best_model": "logistic_regression",
+  "selection_metric": "cv_f1",
+  "cv_folds": 5,
+  "cv_results": {
+    "logistic_regression": {
+      "mean_f1": 0.5921142212000234,
+      "std_f1": 0.029898787064983733,
+      "fold_f1": [
+        0.5850091407678245,
+        0.5494505494505495,
+        0.5862708719851577,
+        0.6424870466321243,
+        0.5973534971644613
+      ]
+    },
+    "random_forest": {
+      "mean_f1": 0.5498830162085977,
+      "std_f1": 0.022170229294403675,
+      "fold_f1": [
+        0.5454545454545454,
+        0.5378787878787878,
+        0.5890909090909091,
+        0.5227272727272727,
+        0.5542635658914729
+      ]
+    },
+    "gradient_boosting": {
+      "mean_f1": 0.5902001258679758,
+      "std_f1": 0.022659720771601798,
+      "fold_f1": [
+        0.5682242990654206,
+        0.5582255083179297,
+        0.6120218579234973,
+        0.6003616636528029,
+        0.6121673003802282
+      ]
+    }
+  },
+  "mlflow_run_id": "10e9f23d7a1c42c0821cb84d7718d1dc",
+  "mlflow_tracking_uri": "sqlite:///C:/Users/SATHSARA/Desktop/CustomerPulse-AI/backend/artifacts/training/mlflow.db",
+  "prediction_threshold": 0.5,
+  "training_rows": 5634,
+  "test_rows": 1409,
+  "dataset_size": 7043,
+  "input_features": [
+    "tenure",
+    "MonthlyCharges",
+    "TotalCharges",
+    "SeniorCitizen",
+    "gender",
+    "Partner",
+    "Dependents",
+    "PhoneService",
+    "MultipleLines",
+    "InternetService",
+    "OnlineSecurity",
+    "OnlineBackup",
+    "DeviceProtection",
+    "TechSupport",
+    "StreamingTV",
+    "StreamingMovies",
+    "Contract",
+    "PaperlessBilling",
+    "PaymentMethod"
+  ],
+  "feature_names": [
+    "continuous__tenure",
+    "continuous__MonthlyCharges",
+    "continuous__TotalCharges",
+    "binary__SeniorCitizen",
+    "categorical__gender_Female",
+    "categorical__gender_Male",
+    "categorical__Partner_No",
+    "categorical__Partner_Yes",
+    "categorical__Dependents_No",
+    "categorical__Dependents_Yes",
+    "categorical__PhoneService_No",
+    "categorical__PhoneService_Yes",
+    "categorical__MultipleLines_No",
+    "categorical__MultipleLines_No phone service",
+    "categorical__MultipleLines_Yes",
+    "categorical__InternetService_DSL",
+    "categorical__InternetService_Fiber optic",
+    "categorical__InternetService_No",
+    "categorical__OnlineSecurity_No",
+    "categorical__OnlineSecurity_No internet service",
+    "categorical__OnlineSecurity_Yes",
+    "categorical__OnlineBackup_No",
+    "categorical__OnlineBackup_No internet service",
+    "categorical__OnlineBackup_Yes",
+    "categorical__DeviceProtection_No",
+    "categorical__DeviceProtection_No internet service",
+    "categorical__DeviceProtection_Yes",
+    "categorical__TechSupport_No",
+    "categorical__TechSupport_No internet service",
+    "categorical__TechSupport_Yes",
+    "categorical__StreamingTV_No",
+    "categorical__StreamingTV_No internet service",
+    "categorical__StreamingTV_Yes",
+    "categorical__StreamingMovies_No",
+    "categorical__StreamingMovies_No internet service",
+    "categorical__StreamingMovies_Yes",
+    "categorical__Contract_Month-to-month",
+    "categorical__Contract_One year",
+    "categorical__Contract_Two year",
+    "categorical__PaperlessBilling_No",
+    "categorical__PaperlessBilling_Yes",
+    "categorical__PaymentMethod_Bank transfer (automatic)",
+    "categorical__PaymentMethod_Credit card (automatic)",
+    "categorical__PaymentMethod_Electronic check",
+    "categorical__PaymentMethod_Mailed check"
+  ],
+  "updated_at": "2026-10-17T05:49:14.344404+00:00"
 }

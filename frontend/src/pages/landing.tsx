@@ -15,14 +15,10 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { ThemeToggle } from '@/components/layout/theme-toggle'
 import { formatPercent } from '@/lib/utils'
-import { MOCK_METRICS } from '@/data/mockData'
+import { useApiResource } from '@/hooks/use-api-resource'
+import { useBackendHealth } from '@/hooks/use-backend-health'
+import { DEMO_MODE, getMetrics } from '@/services/api'
 
-const STATS = [
-  { label: 'Model accuracy', value: formatPercent(MOCK_METRICS.accuracy), icon: TrendingUp },
-  { label: 'ROC-AUC score', value: formatPercent(MOCK_METRICS.roc_auc), icon: BarChart3 },
-  { label: 'Customers scored', value: '7,043', icon: Users },
-  { label: 'Avg. response time', value: '180ms', icon: Zap },
-]
 
 const FEATURES = [
   {
@@ -43,6 +39,14 @@ const FEATURES = [
 ]
 
 export function LandingPage() {
+  const metrics = useApiResource(getMetrics, 15000)
+  const health = useBackendHealth()
+  const stats = [
+    { label: 'Model accuracy', value: metrics.data ? formatPercent(metrics.data.accuracy) : '--', icon: TrendingUp },
+    { label: 'ROC-AUC score', value: metrics.data ? formatPercent(metrics.data.roc_auc) : '--', icon: BarChart3 },
+    { label: 'Predictions recorded', value: health.data?.predictionCount?.toLocaleString() ?? '--', icon: Users },
+    { label: 'API status', value: DEMO_MODE ? 'Demo' : health.loading ? 'Checking' : health.data?.status === 'ok' ? 'Ready' : health.data?.status ?? 'Offline', icon: Zap },
+  ]
   return (
     <div className="relative min-h-svh overflow-hidden bg-background">
       <div className="pointer-events-none absolute inset-0 bg-gradient-radial-glow" />
@@ -77,7 +81,7 @@ export function LandingPage() {
             className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-4 py-1.5 text-xs font-medium text-muted-foreground backdrop-blur"
           >
             <Sparkles className="h-3.5 w-3.5 text-primary" />
-            Production ML inference, live from your FastAPI backend
+            {DEMO_MODE ? 'Demo mode: illustrated data' : health.isLive ? 'Connected to your FastAPI backend' : 'Customer churn scoring and model monitoring'}
           </motion.div>
 
           <motion.h1
@@ -128,7 +132,7 @@ export function LandingPage() {
           transition={{ duration: 0.6, delay: 0.25 }}
           className="mx-auto mt-16 grid max-w-4xl grid-cols-2 gap-4 lg:grid-cols-4"
         >
-          {STATS.map((stat) => (
+          {stats.map((stat) => (
             <Card key={stat.label} className="border-border/60 bg-card/60 backdrop-blur">
               <CardContent className="flex flex-col items-center gap-2 p-5 text-center">
                 <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">

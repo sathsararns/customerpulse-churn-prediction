@@ -1,7 +1,6 @@
 from pathlib import Path
 import sys
 import json
-import joblib
 import pandas as pd
 
 from sklearn.metrics import (
@@ -28,25 +27,25 @@ def load_split_data(base_dir: Path):
 
 
 def load_model(base_dir: Path, model_name: str):
-    model_path = base_dir / "models" / f"{model_name}.pkl"
-    if not model_path.exists():
-        raise FileNotFoundError(f"Model file not found: {model_path}")
+    from src.model_inference import load_artifacts
+    pipeline, saved_name = load_artifacts(base_dir)
+    if model_name != saved_name:
+        raise ValueError(f"Requested {model_name}, but the saved pipeline is {saved_name}")
+    return pipeline
 
-    return joblib.load(model_path)
 
-
-def evaluate(model, X_test, y_test):
-    y_pred = model.predict(X_test)
+def evaluate(model, X_test, y_test, prediction_threshold=0.5):
     y_prob = model.predict_proba(X_test)[:, 1]
+    y_pred = (y_prob >= prediction_threshold).astype(int)
 
     return {
         "accuracy": accuracy_score(y_test, y_pred),
-        "precision": precision_score(y_test, y_pred),
-        "recall": recall_score(y_test, y_pred),
-        "f1_score": f1_score(y_test, y_pred),
+        "precision": precision_score(y_test, y_pred, zero_division=0),
+        "recall": recall_score(y_test, y_pred, zero_division=0),
+        "f1_score": f1_score(y_test, y_pred, zero_division=0),
         "roc_auc": roc_auc_score(y_test, y_prob),
         "confusion_matrix": confusion_matrix(y_test, y_pred).tolist(),
-        "classification_report": classification_report(y_test, y_pred, output_dict=True),
+        "classification_report": classification_report(y_test, y_pred, output_dict=True, zero_division=0),
     }
 
 
@@ -55,38 +54,36 @@ def save_report(base_dir: Path, metrics: dict):
     reports_dir.mkdir(parents=True, exist_ok=True)
 
     report_path = reports_dir / "evaluation_report.json"
+    # Preserve the CV selection evidence if evaluation is manually repeated.
+    report = json.loads(report_path.read_text(encoding="utf-8")) if report_path.exists() else {}
+    report.update(metrics)
+    from datetime import datetime, timezone
+    report["updated_at"] = datetime.now(timezone.utc).isoformat()
     with open(report_path, "w", encoding="utf-8") as f:
-        json.dump(metrics, f, indent=4)
+        json.dump(report, f, indent=4)
 
     print(f"Evaluation report saved to: {report_path}")
 
 
 def main():
-    metrics_path = BASE_DIR / "reports" / "model_metrics.json"
-    if not metrics_path.exists():
-        raise FileNotFoundError(f"Metrics file not found: {metrics_path}")
+    import argparse
+    from utils.artifact_manager import get_artifact_manager
+    from utils.config import load_config
 
-    with open(metrics_path, "r", encoding="utf-8") as f:
-        report_info = json.load(f)
-
-    best_model_name = report_info["best_model"]
-    print(f"Best model from training: {best_model_name}")
-
-    X_test, y_test = load_split_data(BASE_DIR)
-    model = load_model(BASE_DIR, best_model_name)
-
-    metrics = evaluate(model, X_test, y_test)
-
-    print("\nEvaluation Results:")
-    print(f"Accuracy : {metrics['accuracy']:.4f}")
-    print(f"Precision: {metrics['precision']:.4f}")
-    print(f"Recall   : {metrics['recall']:.4f}")
-    print(f"F1 Score : {metrics['f1_score']:.4f}")
-    print(f"ROC AUC  : {metrics['roc_auc']:.4f}")
-    print("\nConfusion Matrix:")
-    print(metrics["confusion_matrix"])
-
-    save_report(BASE_DIR, metrics)
+    parser = argparse.ArgumentParser(description="Repeat evaluation without changing saved bundles")
+    parser.add_argument("--model-version")
+    parser.add_argument("--output-dir")
+    parser.add_argument("--config", dest="config_path")
+    args = parser.parse_args()
+    settings = load_config(args.config_path, args.output_dir)
+    manager = get_artifact_manager(settings)
+    pipeline, manifest = manager.load_model(args.model_version)
+    if manifest["artifact_format"] == "sklearn_pipeline_v2":
+        _, X_test, _, y_test, _ = manager.load_dataset(manifest["dataset_version"])
+    else:
+        X_test, y_test = load_split_data(settings.base_dir)
+    print(json.dumps(evaluate(pipeline, X_test, y_test,
+                              manifest["prediction_threshold"]), indent=2))
 
 
 if __name__ == "__main__":

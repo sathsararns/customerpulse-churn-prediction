@@ -63,6 +63,9 @@ export function RecentPredictionsTable({ predictions, loading }: RecentPredictio
                   <div className="min-w-0">
                     <p className="truncate font-medium">{p.customerName}</p>
                     <p className="truncate text-xs text-muted-foreground">{p.customerId}</p>
+                    <p className="text-[10px] uppercase text-muted-foreground">Source: {p.source ?? 'demo'}</p>
+                    {p.eventId && <p className="max-w-48 truncate text-[10px] text-muted-foreground" title={p.eventId}>Event: {p.eventId}</p>}
+                    <p className="max-w-48 truncate text-[10px] text-muted-foreground" title={p.modelVersion ?? 'Version not recorded'}>Version: {p.modelVersion ?? 'Not recorded'}</p>
                   </div>
                 </div>
               </td>

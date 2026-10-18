@@ -1,0 +1,105 @@
+name: customerpulse
+
+x-backend: &backend
+  image: customerpulse-backend:local
+  build:
+    context: ./backend
+  environment: &backend-env
+    DATABASE_URL: postgresql+psycopg://customerpulse:${POSTGRES_PASSWORD:-customerpulse_local}@postgres:5432/customerpulse
+    MLFLOW_TRACKING_URI: http://mlflow:5000
+    MLFLOW_UI_URL: http://localhost:${MLFLOW_PORT:-8088}
+    GIT_REVISION: ${GIT_REVISION:-}
+  volumes:
+    - model_artifacts:/app/artifacts
+    - model_reports:/app/reports
+  depends_on:
+    postgres:
+      condition: service_healthy
+    mlflow:
+      condition: service_healthy
+
+services:
+  postgres:
+    image: postgres:17-bookworm
+    environment:
+      POSTGRES_USER: customerpulse
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-customerpulse_local}
+      POSTGRES_DB: customerpulse
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/01-databases.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U customerpulse -d customerpulse"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  mlflow:
+    image: customerpulse-backend:local
+    environment:
+      MLFLOW_BACKEND_STORE_URI: postgresql+psycopg://customerpulse:${POSTGRES_PASSWORD:-customerpulse_local}@postgres:5432/mlflow
+    command:
+      - mlflow
+      - server
+      - --host=0.0.0.0
+      - --port=5000
+      - --workers=1
+      - --serve-artifacts
+      - --artifacts-destination=/app/mlartifacts
+      - --allowed-hosts=mlflow:5000,localhost:*,127.0.0.1:*
+    ports:
+      - "127.0.0.1:${MLFLOW_PORT:-8088}:5000"
+    volumes:
+      - mlflow_artifacts:/app/mlartifacts
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "from urllib.request import urlopen; urlopen('http://localhost:5000/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      start_period: 40s
+      retries: 20
+    restart: unless-stopped
+
+  backend:
+    <<: *backend
+    ports:
+      - "127.0.0.1:${API_PORT:-8000}:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import json; from urllib.request import urlopen; assert json.load(urlopen('http://localhost:8000/health', timeout=3))['ready']"]
+      interval: 10s
+      timeout: 5s
+      start_period: 20s
+      retries: 6
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "127.0.0.1:${FRONTEND_PORT:-5173}:8080"
+    depends_on:
+      backend:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8080/"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+    restart: unless-stopped
+
+  train:
+    <<: *backend
+    profiles: ["training"]
+    entrypoint: ["python", "-m", "pipelines.training_pipeline"]
+    command: ["--activate"]
+
+volumes:
+  postgres_data:
+  mlflow_artifacts:
+  model_artifacts:
+  model_reports:

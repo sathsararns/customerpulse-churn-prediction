@@ -1,0 +1,30 @@
+# Paths are relative to backend; --output-dir changes generated output locations.
+data:
+  path: data/raw/churn.csv
+  test_size: 0.2
+  random_state: 42
+
+training:
+  cv_folds: 5
+  prediction_threshold: 0.5
+
+storage:
+  backend: local
+  artifacts_dir: artifacts
+
+mlflow:
+  experiment_name: CustomerPulse-AI
+  # null uses artifacts/training/mlflow.db without requiring a server.
+  tracking_uri: null
+  artifact_root: null
+
+# Initial retention gates, based on corrected LR baseline:
+# F1 .6040, recall .5588, precision .6572, ROC-AUC .8418.
+acceptance:
+  min_f1: 0.60
+  min_recall: 0.55
+  min_precision: 0.63
+  min_roc_auc: 0.83
+  max_f1_drop: 0.005
+  max_recall_drop: 0.01
+  require_same_dataset: true

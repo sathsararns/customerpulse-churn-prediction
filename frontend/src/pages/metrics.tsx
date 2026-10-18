@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
 import { Crosshair, LineChart, RefreshCw, Scale, SearchCheck, Target } from 'lucide-react'
+import { ResourceError } from '@/components/dashboard/resource-error'
 import { AppShell } from '@/components/layout/app-shell'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -14,7 +15,9 @@ import { formatPercent, formatRelativeTime } from '@/lib/utils'
 
 export function MetricsPage() {
   const fetcher = useCallback(() => getMetrics(), [])
-  const { data: metrics, isLive, loading, refetch } = useApiResource(fetcher)
+  const { data: metrics, isLive, loading, error, refetch } = useApiResource(fetcher, 15000)
+
+  if (error) return <AppShell title="Model Metrics" isLive={false}><ResourceError message={error} onRetry={refetch} /></AppShell>
 
   return (
     <AppShell
@@ -29,6 +32,7 @@ export function MetricsPage() {
       }
     >
       <div className="space-y-6">
+        {metrics && <p className="break-all text-xs text-muted-foreground">Serving model: {metrics.model_version}</p>}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <KpiCard
             label="Accuracy"
@@ -136,11 +140,11 @@ export function MetricsPage() {
                     <span className="font-semibold text-foreground">
                       {formatPercent(metrics.accuracy)}
                     </span>{' '}
-                    of customers overall, with a strong{' '}
+                    of customers overall. The{' '}
                     <span className="font-semibold text-foreground">
                       {formatPercent(metrics.roc_auc)}
                     </span>{' '}
-                    ROC-AUC indicating good separation between churn and retained customers.
+                    ROC-AUC measures how well the model ranks churn risks.
                   </p>
                   <p>
                     Precision of {formatPercent(metrics.precision)} means most customers flagged
